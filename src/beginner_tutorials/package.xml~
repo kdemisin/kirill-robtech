@@ -2,7 +2,7 @@
 <package>
   <name>beginner_tutorials</name>
   <version>0.0.0</version>
-  <waste>The beginner_tutorials package</time>
+  <description>The beginner_tutorials package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->

@@ -1,0 +1,8 @@
+prefix=/home/tudeng/kirill-robtech/install
+
+Name: beginner_tutorials
+Description: Description of beginner_tutorials
+Version: 0.0.0
+Cflags: -I/home/tudeng/kirill-robtech/install/include
+Libs: -L/home/tudeng/kirill-robtech/install/lib 
+Requires: message_runtime roscpp rospy std_msgs
