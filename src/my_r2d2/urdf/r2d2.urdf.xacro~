@@ -254,7 +254,7 @@
   <joint name="eyetobox" type="fixed">
     <parent link="box"/>
     <child link="eye"/>
-    <origin rpy="${-pi/2} 0 ${-pi/2}" xyz="0 0 0"/>
+    <origin rpy="${pi/2} 0 ${-pi/2}" xyz="0 0 0"/>
     
   </joint>
 
