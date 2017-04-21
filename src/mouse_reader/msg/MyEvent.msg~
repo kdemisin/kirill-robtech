@@ -4,7 +4,7 @@ int8 direction_y
 int8 wheel_rotation
 
 # Sum of direction values since the launch of the node
-#int64 integral
+int64 integral
 
 # TRUE while button is pressed, FALSE otherwise
 bool btn_right

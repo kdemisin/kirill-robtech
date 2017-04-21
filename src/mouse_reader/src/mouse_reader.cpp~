@@ -160,64 +160,93 @@ void PowerMate::processEvent(struct input_event *ev, ros::Publisher& ros_publish
   // PowermateEvent ROS message
   mouse_reader::MyEvent ros_message;
 
-  // ---- Event information about Griffin PowerMate USB from evtest ----
-  //
-  // Input device name: "Griffin PowerMate"
-  // Supported events:
-  //	Event type 0 (EV_SYN)
-  //	Event type 1 (EV_KEY)
-  //		Event code 256 (BTN_0)
-  //	Event type 2 (EV_REL)
-  //		Event code 7 (REL_DIAL)
-  //	Event type 4 (EV_MSC)
-  //		Event code 1 (MSC_PULSELED)
-  // -------------------------------------------------------------------
-  
+ 
+/*Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 272 (BTN_LEFT)
+    Event code 273 (BTN_RIGHT)
+    Event code 274 (BTN_MIDDLE)
+    Event code 275 (BTN_SIDE)
+    Event code 276 (BTN_EXTRA)
+    Event code 277 (BTN_FORWARD)
+    Event code 278 (BTN_BACK)
+    Event code 279 (BTN_TASK)
+  Event type 2 (EV_REL)
+    Event code 0 (REL_X)
+    Event code 1 (REL_Y)
+    Event code 8 (REL_WHEEL)
+  Event type 4 (EV_MSC)
+    Event code 4 (MSC_SCAN)
+*/
+
   // Switch to a case based on the event type
   switch(ev->type)
   {
     case EV_SYN:				// no need to do anything
-//      printf("SYN REPORT\n");
-      break; 
-    case EV_MSC:				// unused for this ROS publisher
-      ROS_INFO("The LED pulse settings were changed; code=0x%04x, value=0x%08x\n", ev->code, ev->value);
+      /*printf("SYN REPORT\n");*/
+//ROS_INFO("EV_SYN; code=0x%04x, value=0x%08x\n", ev->code, ev->value);
       break;
-    case EV_REL:				// Upon receiving rotation data
-      if(ev->code != REL_DIAL)
-	ROS_WARN("Unexpected rotation event; ev->code = 0x%04x\n", ev->code);
-      else
-      {
-	// Reads direction value from turn knob
-	signed char dir = (signed char)ev->value;
-	// Sums consecutive dir values to find integral
-	integral_ += (long long)dir;
+    case EV_MSC:				// unused for this ROS publisher
+      //ROS_INFO("EV_MSC; code=0x%04x, value=0x%08x\n", ev->code, ev->value);
+      break;
+    case EV_REL:
+	switch(ev->code)
+ 	 {	
+	case 0:				// no need to do anything
+      printf("mouse was rotated %d units to X axis\n", (int)ev->value);
+      ros_message.direction_x = (int)ev->value;
+	break;
+	case 1:				// no need to do anything
+     printf("Mouse was rotated %d units to Y axis\n", (int)ev->value);
+	ros_message.direction_y = (int)ev->value;
+      break;
+	case 8:				// no need to do anything
+     printf("WHEEL was rotated %d units\n", (int)ev->value);
+	ros_message.wheel_rotation = (int)ev->value;
+      break;
+	}
+	//printf("REL REPORT\n");
+	//ROS_INFO("EV_REL; code=0x%04x, value=0x%08x\n", ev->code, ev->value);	
 	// Composing a ros_message
-	ros_message.direction = dir;
-	ros_message.integral = integral_;
+	
+	/*ros_message.integral = integral_;
 	ros_message.is_pressed = pressed_;
 	ros_message.push_state_changed = false;
-	// Publish ros_message
+	// Publish ros_message*/
 	ros_publisher.publish( ros_message );
-	//printf("Button was rotated %d units; Shift from start is now %d units\n", (int)ev->value, total_shift);
-      }
+      //printf("Button was rotated %d units", (int)ev->value);
       break;
-    case EV_KEY:				// Upon receiving data about pressing and depressing the dial button
-      if(ev->code != BTN_0)
-	ROS_WARN("Unexpected key event; ev->code = 0x%04x\n", ev->code);
-      else
-      {
-	// reads EV_KEY value, converts it to bool
-	pressed_ = (bool)ev->value;
+    case EV_KEY:
+	switch(ev->code)
+ 	{	// Upon receiving data about pressing and depressing the dial button
+	 case 272:				
+           printf("Left button was %s\n", ev->value? "pressed":"released");
+	ros_message.btn_left = ev->value;
+          break;
+	 case 273:				
+           printf("Right button was %s\n", ev->value? "pressed":"released");
+	ros_message.btn_right = ev->value;
+          break;
+	 case 274:				
+           printf("BTN_MIDDLE was %s\n", ev->value? "pressed":"released");
+	ros_message.btn_middle = ev->value;
+          break;
+	}
+      	//ROS_INFO("EV_KEY; code=0x%06x, value=0x%08x\n", ev->code, ev->value);
+        // reads EV_KEY value, converts it to bool
+	/*pressed_ = (bool)ev->value;
 	// Composing a ros_message
 	ros_message.direction = 0;
 	ros_message.integral = integral_;
 	ros_message.is_pressed = pressed_;
-	ros_message.push_state_changed = true;
+	ros_message.push_state_changed = true;*/
 	// Publish ros_message
 	ros_publisher.publish( ros_message );
-	//printf("Button was %s\n", ev->value? "pressed":"released");
-      }
+	//printf("Left button was %s\n", ev->value? "pressed":"released");
+
       break;
+
     default:					// default case
       ROS_WARN("Unexpected event type; ev->type = 0x%04x\n", ev->type);
   } // end switch
