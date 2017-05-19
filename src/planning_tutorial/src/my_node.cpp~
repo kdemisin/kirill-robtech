@@ -7,13 +7,14 @@
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "my_node");
+  ros::init(argc, argv, "planning_tutorial_node");
   ros::NodeHandle n;
 int count = 0;
   moveit::planning_interface::MoveGroup group("right_arm");
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
   
-
+  ROS_INFO("Reference frame: %s", group.getPlanningFrame().c_str());
+  ROS_INFO("Reference frame: %s", group.getEndEffectorLink().c_str());
 
   return 0;
 }
