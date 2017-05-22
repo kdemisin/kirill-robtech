@@ -22,23 +22,38 @@ ROS_INFO("Reference frame: %s", group.getPlanningFrame().c_str());
 ROS_INFO("Reference frame: %s", group.getEndEffectorLink().c_str());
 
 robot_state::RobotState start_state(*group.getCurrentState());
-geometry_msgs::Pose start_pose2;
 
-geometry_msgs::Pose target_pose3 = start_pose2;
+geometry_msgs::PoseStamped init_pose = group.getCurrentPose();
 
-  geometry_msgs::Pose target_pose = start_pose2;
-  target_pose3.position.x += 0.2;
-  target_pose3.position.z += 0.2;
+geometry_msgs::Pose start_pose = init_pose.pose;
+
+geometry_msgs::Pose target_pose = start_pose;
+//z+ is up
+
+ //group.setNamedTarget ("pose2");
+ //group.move();
+
+  target_pose.position.z -= 0.2;
+  target_pose.position.y -= 0.1;
   waypoints.push_back(target_pose);  // up and out
 
-  target_pose3.position.y -= 0.2;
+  target_pose.position.y += 0.2;
+  waypoints.push_back(target_pose);
+
+  target_pose.position.z += 0.2;
+  target_pose.position.y -= 0.1;
+  waypoints.push_back(target_pose);
+
+
+
+  /*target_pose3.position.y -= 0.2;
   waypoints.push_back(target_pose);  // left
 
   target_pose3.position.z -= 0.2;
   target_pose3.position.y += 0.2;
   target_pose3.position.x -= 0.2;
   waypoints.push_back(target_pose);  // down and right (back to start)
-
+*/
 
 //
 
@@ -51,16 +66,16 @@ double fraction = group.computeCartesianPath(waypoints,
 ROS_INFO("Visualizing plan 4 (cartesian path) (%.2f%% acheived)",
       fraction * 100.0);
 /* Sleep to give Rviz time to visualize the plan. */
-sleep(15.0);
+sleep(3.0);
 
 
 
-/*
 moveit::planning_interface::MoveGroup::Plan my_plan;
-bool success = group.plan(my_plan);
+my_plan.trajectory_ = trajectory;
+
 group.execute(my_plan);
 
-group.move(my_plan);
+//group.move(my_plan);
 
 
 /*
