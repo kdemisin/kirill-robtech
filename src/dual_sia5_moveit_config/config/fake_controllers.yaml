@@ -1,0 +1,35 @@
+controller_list:
+  - name: fake_first_manipulator_controller
+    joints:
+      - joint_s
+      - joint_l
+      - joint_e
+      - joint_u
+      - joint_r
+      - joint_b
+      - joint_t
+  - name: fake_second_manipulator_controller
+    joints:
+      - my_joint_s2
+      - my_joint_l2
+      - my_joint_e2
+      - my_joint_u2
+      - my_joint_r2
+      - my_joint_b2
+      - my_joint_t2
+  - name: fake_dual_manipulator_controller
+    joints:
+      - joint_s
+      - joint_l
+      - joint_e
+      - joint_u
+      - joint_r
+      - joint_b
+      - joint_t
+      - my_joint_s2
+      - my_joint_l2
+      - my_joint_e2
+      - my_joint_u2
+      - my_joint_r2
+      - my_joint_b2
+      - my_joint_t2

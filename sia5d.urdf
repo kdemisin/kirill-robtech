@@ -1,0 +1,4 @@
+[rosrun] Couldn't find executable named sia5d.xacro below /home/tudeng/kirill-robtech/src/dual_manipulator_support
+[rosrun] Found the following, but they're either not files,
+[rosrun] or not executable:
+[rosrun]   /home/tudeng/kirill-robtech/src/dual_manipulator_support/urdf/sia5d.xacro

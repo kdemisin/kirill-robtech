@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: dual_diff_manipulator_support
+    relative_path: urdf/ur5_joint_limited_robot.urdf.xacro
+  SRDF:
+    relative_path: config/ur5.srdf
+  CONFIG:
+    author_name: Kirill
+    author_email: demishin.kirill@gmail.com
+    generated_timestamp: 1495532700
