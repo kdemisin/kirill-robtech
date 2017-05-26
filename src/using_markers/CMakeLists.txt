@@ -1,17 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mouse_reader)
-
-set(CMAKE_CXX_FLAGS "-std=c++11")
+project(using_markers)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
-  std_msgs
-  message_generation
-visualization_msgs
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -48,10 +43,11 @@ visualization_msgs
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   MyEvent.msg
- )
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -68,10 +64,10 @@ visualization_msgs
 # )
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   visualization_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,8 +100,8 @@ visualization_msgs
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES mouse_reader
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES using_markers
+#  CATKIN_DEPENDS roscpp visualization_msgs
 #  DEPENDS system_lib
 )
 
@@ -116,27 +112,34 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a C++ library
-# add_library(mouse_reader
-#   src/${PROJECT_NAME}/mouse_reader.cpp
+# add_library(using_markers
+#   src/${PROJECT_NAME}/using_markers.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(mouse_reader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(using_markers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
- add_executable(mouse_reader src/mouse_reader.cpp)
+# add_executable(using_markers_node src/using_markers_node.cpp)
+
+add_executable(basic_shapes src/basic_shapes.cpp)
+target_link_libraries(basic_shapes ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(mouse_reader mouse_reader_generate_messages_cpp)
+# add_dependencies(using_markers_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(mouse_reader ${catkin_LIBRARIES})
+# target_link_libraries(using_markers_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -153,7 +156,7 @@ include_directories(include)
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS mouse_reader mouse_reader_node
+# install(TARGETS using_markers using_markers_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -178,7 +181,7 @@ include_directories(include)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mouse_reader.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_using_markers.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

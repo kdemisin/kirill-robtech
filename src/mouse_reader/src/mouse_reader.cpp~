@@ -44,12 +44,101 @@
 
 #include "mouse_reader/mouse_reader.h"
 
+#include <visualization_msgs/Marker.h>
+
 /** Opens the input device and checks whether its meaningful name (ie, EVIOCGNAME in ioctl()) is listed in valid_substrings_.
  *  @param device_path file name for linux event.
  *  @return file descriptor to PowerMate event if all checks out, otherwise -1.
  */
 
+int main(int argc, char *argv[])
+{
 
+  // ROS init
+  ros::init(argc, argv, "mouse_reader");
+  ros::NodeHandle n;
+  ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+uint32_t shape = visualization_msgs::Marker::SPHERE;// Private nodehandle for ROS
+  ros::NodeHandle pnh("~");
+  visualization_msgs::Marker marker;
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "/my_frame";
+    marker.header.stamp = ros::Time::now();
+
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    // Any marker sent with the same namespace and id will overwrite the old one
+    marker.ns = "basic_shapes";
+    marker.id = 0;
+
+    // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
+    marker.type = shape;
+
+    // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    marker.action = visualization_msgs::Marker::ADD;
+
+    // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+
+    // Set the scale of the marker -- 1x1x1 here means 1m on a side
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker.lifetime = ros::Duration();
+
+switch (shape)
+    {
+    case visualization_msgs::Marker::CUBE:
+      shape = visualization_msgs::Marker::SPHERE;
+      break;
+    case visualization_msgs::Marker::SPHERE:
+      shape = visualization_msgs::Marker::ARROW;
+      break;
+    case visualization_msgs::Marker::ARROW:
+      shape = visualization_msgs::Marker::CYLINDER;
+      break;
+    case visualization_msgs::Marker::CYLINDER:
+      shape = visualization_msgs::Marker::CUBE;
+      break;
+    }
+  // Getting user-specified path from ROS parameter server
+  std::string powermate_path;
+  pnh.param<std::string>("path", powermate_path, "");
+  
+  // Let's construct PowerMate object 
+  PowerMate powermate(powermate_path);
+  
+  // If failed to open any PowerMate USB device, print info and exit
+  if( !powermate.isReadable() )
+  {
+    ROS_ERROR("Unable to locate any PowerMate device.");
+    ROS_INFO("You may try specifying path as ROS parameter, e.g., rosrun mouse_reader mouse_reader _path:=<device_event_path>");
+    return -1;
+  }
+
+  // Creates publisher that advertises griffin_powermate::PowermateEvent messages on topic /griffin_powermate/events
+  ros::Publisher pub_My_events = pnh.advertise<mouse_reader::MyEvent>("events", 100);
+  
+  // After PowerMate is succesfully opened, read its input, publish ROS messages, and spin.
+  powermate.spinPowerMate(pub_My_events);
+
+  // Close PowerMate
+  powermate.closePowerMate();
+
+  return 0;
+} //end main
 
 int PowerMate::openPowerMate(const char *device_path)
 {
@@ -158,99 +247,72 @@ bool PowerMate::isReadable ()
 void PowerMate::processEvent(struct input_event *ev, ros::Publisher& ros_publisher)
 {
   // PowermateEvent ROS message
+ros::NodeHandle n;
+ ros::Rate r(1);
   mouse_reader::MyEvent ros_message;
+visualization_msgs::Marker marker;
+  ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+uint32_t shape = visualization_msgs::Marker::ARROW;
 
- 
-/*Supported events:
-  Event type 0 (EV_SYN)
-  Event type 1 (EV_KEY)
-    Event code 272 (BTN_LEFT)
-    Event code 273 (BTN_RIGHT)
-    Event code 274 (BTN_MIDDLE)
-    Event code 275 (BTN_SIDE)
-    Event code 276 (BTN_EXTRA)
-    Event code 277 (BTN_FORWARD)
-    Event code 278 (BTN_BACK)
-    Event code 279 (BTN_TASK)
-  Event type 2 (EV_REL)
-    Event code 0 (REL_X)
-    Event code 1 (REL_Y)
-    Event code 8 (REL_WHEEL)
-  Event type 4 (EV_MSC)
-    Event code 4 (MSC_SCAN)
-*/
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "/my_frame";
+    marker.header.stamp = ros::Time::now();
 
-  // Switch to a case based on the event type
-  switch(ev->type)
-  {
-    case EV_SYN:				// no need to do anything
-      /*printf("SYN REPORT\n");*/
-//ROS_INFO("EV_SYN; code=0x%04x, value=0x%08x\n", ev->code, ev->value);
-      break;
-    case EV_MSC:				// unused for this ROS publisher
-      //ROS_INFO("EV_MSC; code=0x%04x, value=0x%08x\n", ev->code, ev->value);
-      break;
-    case EV_REL:
-	switch(ev->code)
- 	 {	
-	case 0:				// no need to do anything
-      printf("mouse was rotated %d units to X axis\n", (int)ev->value);
-      ros_message.direction_x = (int)ev->value;
-	break;
-	case 1:				// no need to do anything
-     printf("Mouse was rotated %d units to Y axis\n", (int)ev->value);
-	ros_message.direction_y = (int)ev->value;
-      break;
-	case 8:				// no need to do anything
-     printf("WHEEL was rotated %d units\n", (int)ev->value);
-	ros_message.wheel_rotation = (int)ev->value;
-      break;
-	}
-	//printf("REL REPORT\n");
-	//ROS_INFO("EV_REL; code=0x%04x, value=0x%08x\n", ev->code, ev->value);	
-	// Composing a ros_message
-	
-	/*ros_message.integral = integral_;
-	ros_message.is_pressed = pressed_;
-	ros_message.push_state_changed = false;
-	// Publish ros_message*/
-	ros_publisher.publish( ros_message );
-      //printf("Button was rotated %d units", (int)ev->value);
-      break;
-    case EV_KEY:
-	switch(ev->code)
- 	{	// Upon receiving data about pressing and depressing the dial button
-	 case 272:				
-           printf("Left button was %s\n", ev->value? "pressed":"released");
-	ros_message.btn_left = ev->value;
-          break;
-	 case 273:				
-           printf("Right button was %s\n", ev->value? "pressed":"released");
-	ros_message.btn_right = ev->value;
-          break;
-	 case 274:				
-           printf("BTN_MIDDLE was %s\n", ev->value? "pressed":"released");
-	ros_message.btn_middle = ev->value;
-          break;
-	}
-      	//ROS_INFO("EV_KEY; code=0x%06x, value=0x%08x\n", ev->code, ev->value);
-        // reads EV_KEY value, converts it to bool
-	/*pressed_ = (bool)ev->value;
-	// Composing a ros_message
-	ros_message.direction = 0;
-	ros_message.integral = integral_;
-	ros_message.is_pressed = pressed_;
-	ros_message.push_state_changed = true;*/
-	// Publish ros_message
-	ros_publisher.publish( ros_message );
-	//printf("Left button was %s\n", ev->value? "pressed":"released");
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    // Any marker sent with the same namespace and id will overwrite the old one
+    marker.ns = "basic_shapes";
+    marker.id = 0;
 
+    // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
+    
+
+    // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    marker.action = visualization_msgs::Marker::ADD;
+
+    // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+
+    // Set the scale of the marker -- 1x1x1 here means 1m on a side
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker.lifetime = ros::Duration();
+
+marker_pub.publish(marker);
+switch (shape)
+    {
+    case visualization_msgs::Marker::CUBE:
+      shape = visualization_msgs::Marker::SPHERE;
       break;
+    case visualization_msgs::Marker::SPHERE:
+      shape = visualization_msgs::Marker::ARROW;
+      break;
+    case visualization_msgs::Marker::ARROW:
+      shape = visualization_msgs::Marker::CYLINDER;
+      break;
+    case visualization_msgs::Marker::CYLINDER:
+      shape = visualization_msgs::Marker::CUBE;
+      break;
+    
 
     default:					// default case
       ROS_WARN("Unexpected event type; ev->type = 0x%04x\n", ev->type);
   } // end switch
-
+marker.type = shape;
+r.sleep();
   fflush(stdout);
 } // end processEvent
 
@@ -260,16 +322,66 @@ void PowerMate::processEvent(struct input_event *ev, ros::Publisher& ros_publish
 void PowerMate::spinPowerMate(ros::Publisher& ros_publisher)
 {
   int const BUFFER_SIZE = 32;
-  
+  uint32_t shape = visualization_msgs::Marker::ARROW;
   // see: https://www.kernel.org/doc/Documentation/input/input.txt
   struct input_event ibuffer[BUFFER_SIZE];
   int r, events, i;
 
   while( ros::ok() )
   {  
-    // read() reads a binary file [http://pubs.opengroup.org/onlinepubs/9699919799/functions/read.html] and returns the number of bytes read.
-    // The program waits in read() until there's something to read; thus it always gets a new event but ROS cannot make a clean exit while in read().
-    // TODO: Figure out a way for ROS to exit cleanly.
+   visualization_msgs::Marker marker;
+    // Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    marker.header.frame_id = "/my_frame";
+    marker.header.stamp = ros::Time::now();
+
+    // Set the namespace and id for this marker.  This serves to create a unique ID
+    // Any marker sent with the same namespace and id will overwrite the old one
+    marker.ns = "basic_shapes";
+    marker.id = 0;
+
+    // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
+    marker.type = shape;
+
+    // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    marker.action = visualization_msgs::Marker::ADD;
+
+    // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+    marker.pose.position.x = 0;
+    marker.pose.position.y = 0;
+    marker.pose.position.z = 0;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+
+    // Set the scale of the marker -- 1x1x1 here means 1m on a side
+    marker.scale.x = 1.0;
+    marker.scale.y = 1.0;
+    marker.scale.z = 1.0;
+
+    // Set the color -- be sure to set alpha to something non-zero!
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker.lifetime = ros::Duration();
+
+switch (shape)
+    {
+    case visualization_msgs::Marker::CUBE:
+      shape = visualization_msgs::Marker::SPHERE;
+      break;
+    case visualization_msgs::Marker::SPHERE:
+      shape = visualization_msgs::Marker::ARROW;
+      break;
+    case visualization_msgs::Marker::ARROW:
+      shape = visualization_msgs::Marker::CYLINDER;
+      break;
+    case visualization_msgs::Marker::CYLINDER:
+      shape = visualization_msgs::Marker::CUBE;
+      break;
+    }
     r = read(descriptor_, ibuffer, sizeof(struct input_event) * BUFFER_SIZE);
     if( r > 0 )
     {
@@ -279,6 +391,7 @@ void PowerMate::spinPowerMate(ros::Publisher& ros_publisher)
       for(i = 0; i < events; i++)
       {
 	// Process event and publish data
+uint32_t shape = visualization_msgs::Marker::CYLINDER;
 	processEvent(&ibuffer[i], ros_publisher);
 	// spin
 	ros::spinOnce();
@@ -297,37 +410,4 @@ void PowerMate::spinPowerMate(ros::Publisher& ros_publisher)
 } // end spinPowerMate
 
 /** Main method. */
-int main(int argc, char *argv[])
-{
-  // ROS init
-  ros::init(argc, argv, "mouse_reader");
-  
-  // Private nodehandle for ROS
-  ros::NodeHandle pnh("~");
-  
-  // Getting user-specified path from ROS parameter server
-  std::string powermate_path;
-  pnh.param<std::string>("path", powermate_path, "");
-  
-  // Let's construct PowerMate object 
-  PowerMate powermate(powermate_path);
-  
-  // If failed to open any PowerMate USB device, print info and exit
-  if( !powermate.isReadable() )
-  {
-    ROS_ERROR("Unable to locate any PowerMate device.");
-    ROS_INFO("You may try specifying path as ROS parameter, e.g., rosrun mouse_reader mouse_reader _path:=<device_event_path>");
-    return -1;
-  }
 
-  // Creates publisher that advertises griffin_powermate::PowermateEvent messages on topic /griffin_powermate/events
-  ros::Publisher pub_My_events = pnh.advertise<mouse_reader::MyEvent>("events", 100);
-  
-  // After PowerMate is succesfully opened, read its input, publish ROS messages, and spin.
-  powermate.spinPowerMate(pub_My_events);
-
-  // Close PowerMate
-  powermate.closePowerMate();
-
-  return 0;
-} //end main
